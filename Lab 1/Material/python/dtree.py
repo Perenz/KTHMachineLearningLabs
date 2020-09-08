@@ -119,6 +119,15 @@ def check(tree, testdata):
         if classify(tree, x) == x.positive:
             correct += 1
     return float(correct)/len(testdata)
+    
+
+def misClasRate(tree, testdata):
+    "Measure fraction of correctly classified samples"
+    correct = 0
+    for x in testdata:
+        if classify(tree, x) != x.positive:
+            correct += 1
+    return float(correct)/len(testdata)
 
 
 def allPruned(tree):
