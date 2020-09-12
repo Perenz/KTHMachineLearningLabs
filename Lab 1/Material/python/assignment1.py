@@ -4,12 +4,12 @@ from dtree import entropy
 
 
 print("Entropy monk1: ", entropy(m.monk1))
-print("Entropy monk1: ", entropy(m.monk2))
-print("Entropy monk1: ", entropy(m.monk3))
+print("Entropy monk2: ", entropy(m.monk2))
+print("Entropy monk3: ", entropy(m.monk3))
 
 '''
 ('Entropy monk1: ', 1.0)
-('Entropy monk1: ', 0.957117428264771)
-('Entropy monk1: ', 0.9998061328047111)
+('Entropy monk2: ', 0.957117428264771)
+('Entropy monk3: ', 0.9998061328047111)
 '''
 

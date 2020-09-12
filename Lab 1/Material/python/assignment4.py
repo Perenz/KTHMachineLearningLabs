@@ -10,7 +10,9 @@ after the split and what the entropy implies.
 ####
 
 '''
-The entropy of the subsets Sk look minimized when the IG is maximized.
+The entropy of the subsets Sk is minimized when the IG is maximized.
+Looking at the IG formula we can notice it corresponds to the reduction of entropy of the 
+starting dataset and the new obtained datasets. So, if it's maximized it means the entropy of the subsets Sk is minimized.
 Because we want to split on the attribute that reduce as much as possible the uncertainty of the dataset.
 That uncertainty is described by the Entropy.
 

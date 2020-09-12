@@ -22,29 +22,31 @@ for k in range(3):
 
 
 '''
-IG(Dataset 1, Attribute 1): 0.075273
-IG(Dataset 1, Attribute 2): 0.005838
-IG(Dataset 1, Attribute 3): 0.004708
-IG(Dataset 1, Attribute 4): 0.026312
-IG(Dataset 1, Attribute 5): 0.287031
-IG(Dataset 1, Attribute 6): 0.000758
-Dataset 1, Attribute 5 MAX IG: 0.287031
+IG(Dataset 1, Attribute 1): 0.07527
+IG(Dataset 1, Attribute 2): 0.00584
+IG(Dataset 1, Attribute 3): 0.00471
+IG(Dataset 1, Attribute 4): 0.02631
+IG(Dataset 1, Attribute 5): 0.28703
+IG(Dataset 1, Attribute 6): 0.00076
+Dataset 1, Attribute 5 MAX IG: 0.287031 -> ROOT NODE = a5
 
 
-IG(Dataset 2, Attribute 1): 0.003756
-IG(Dataset 2, Attribute 2): 0.002458
-IG(Dataset 2, Attribute 3): 0.001056
-IG(Dataset 2, Attribute 4): 0.015664
-IG(Dataset 2, Attribute 5): 0.017277
-IG(Dataset 2, Attribute 6): 0.006248
-Dataset 2, Attribute 5 MAX IG: 0.017277
+IG(Dataset 2, Attribute 1): 0.00376
+IG(Dataset 2, Attribute 2): 0.00246
+IG(Dataset 2, Attribute 3): 0.00106
+IG(Dataset 2, Attribute 4): 0.01566
+IG(Dataset 2, Attribute 5): 0.01728
+IG(Dataset 2, Attribute 6): 0.00625
+Dataset 2, Attribute 5 MAX IG: 0.017277 -> ROOT NODE = a5
 
 
-IG(Dataset 3, Attribute 1): 0.007121
-IG(Dataset 3, Attribute 2): 0.293736
-IG(Dataset 3, Attribute 3): 0.000831
-IG(Dataset 3, Attribute 4): 0.002892
-IG(Dataset 3, Attribute 5): 0.255912
-IG(Dataset 3, Attribute 6): 0.007077
-Dataset 3, Attribute 2 MAX IG: 0.293736
+IG(Dataset 3, Attribute 1): 0.00712
+IG(Dataset 3, Attribute 2): 0.29374
+IG(Dataset 3, Attribute 3): 0.00083
+IG(Dataset 3, Attribute 4): 0.00289
+IG(Dataset 3, Attribute 5): 0.25591
+IG(Dataset 3, Attribute 6): 0.00708
+Dataset 3, Attribute 2 MAX IG: 0.293736 -> ROOT NODE = a2
+
+You should split using the attribute with the highest information gain since you'll obtain datasets that are less uncertain
 '''
