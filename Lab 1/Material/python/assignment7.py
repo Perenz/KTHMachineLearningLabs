@@ -177,8 +177,10 @@ for k in dataset_limit:
 #Plot the classification error as a function for each value of fraction
 
 #Using MatPlotLib
+
 fig, (ax1, ax2) = plt.subplots(2)
 fig.suptitle('ERROR Mean and Variance plots')
+
 
 
 #plt.plot(range(10), linestyle='--', marker='o', color='b')
@@ -188,19 +190,36 @@ fig.suptitle('ERROR Mean and Variance plots')
 colors = ['r', 'b', 'g']
 plots = []
 for k in dataset_limit:
+    i=2
     #plots.append(plt.plot(total_plot_x, avg_plot_y[k], label="MONK%d"%(k))[0])
-    ax1.plot(total_plot_x, avg_plot_y[k], label="MONK%d"%(k+1), linestyle='--', marker='o', color=colors[k])
+    ax1.plot(total_plot_x, avg_plot_y[k], label="MONK%d"%(k+1), linestyle='-', marker='o', color=colors[k])
     ax2.plot(total_plot_x, var_plot_y[k], label="MONK%d"%(k+1), linestyle='--', marker='o', color=colors[k])
 
+    #Plot fill for ax1
+
+    #plt.errorbar(total_plot_x, avg_plot_y[k], var_plot_y[k], linestyle='None', marker='^')
+
+'''
+ax1.errorbar(total_plot_x, avg_plot_y[0], var_plot_y[0], linestyle='None', marker='^')
+ax2.errorbar(total_plot_x, avg_plot_y[2], var_plot_y[2], linestyle='None', marker='^')
+'''
+
+#plt.errorbar(total_plot_x, avg_plot_y[0], var_plot_y[0], linestyle='None', marker='^')
+
+
 #print(plots)
+
 ax1.legend(loc='upper right')
 ax2.legend(loc='upper right')
+
 
 plt.xlabel("Fraction")
 plt.ylabel("Misclassification Err")
 
+
 ax1.set(xlabel='Fraction', ylabel='MisC Error mean')
 ax2.set(xlabel='Fraction', ylabel='MisC Error variance')
+
 
 plt.show()
 
