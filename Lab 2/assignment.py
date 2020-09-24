@@ -1,14 +1,17 @@
 from scipy.optimize import minimize
-import numpy, random, math
+import random, math
+import numpy as np
 import matplotlib.pyplot as plt
 
 #N will be modified by the code after random is called
 N = 0
 
-matrix_p = numpy.empty((1,1))
-targets = numpy.empty(0)
+matrix_p = np.empty((1,1))
+targets = np.empty(0)
 
 C = 10
+
+sigma = None
 
 def objective(vec_a):
     first_term = 0
@@ -20,16 +23,29 @@ def objective(vec_a):
     #toRtn = (first_term/2) - second_term
     return (first_term/2) - second_term
 
+
+#Implement different kernel functions
+def linear_kernel_1(xi,xj):
+    return np.dot(xi, xj)
+
+def polynomial_kernel(xi,xj, p=2):
+    return pow((np.dot(xi,xj) + 1), p) 
+
+def RBF_kernel(xi, xj, a=sigma):
+    return np.exp(-((np.linalg.norm(xi-xj)**2))/(2*a**2))
+
 def kernel_fun(xi,xj):
-    return numpy.dot(xi, xj)
+    return linear_kernel_1(xi,xj)
+    #return polynomial_kernel(xi,xj)
+    #return RBF_kernel(xi,xj,2)
 
 def zerofun(vec_a):
-    toRtn = numpy.dot(vec_a, targets)
+    toRtn = np.dot(vec_a, targets)
     #print("DEBUG Zerofun %f" % (toRtn))
     return toRtn
 
 def save_matrix(inputs, targets):
-    matrix_p = numpy.empty((N,N))
+    matrix_p = np.empty((N,N))
     for i in range(N):
         for j in range(N):
             matrix_p[i][j] = targets[i]*targets[j]*kernel_fun(inputs[i], inputs[j])
@@ -59,27 +75,30 @@ def ind(s, ext_a, targets, b):
 #MAIN
 
 #Generating data
-numpy.random.seed()
+np.random.seed()
 
-classA = numpy.concatenate(
-    (numpy.random.randn(20,2) * 0.2 + [1.5, 0.5],
-    numpy.random.randn(20,2) * 0.2 + [-1.5, 0.5]))
+classA = np.concatenate(
+    (np.random.randn(10,2) * 0.2 + [1.5, 0.5],
+    np.random.randn(10,2) * 0.2 + [-1.5, 0.5]))
 
-classB = numpy.random.randn(40, 2) * 0.2 + [0.0, -0.5]
+classB = np.random.randn(20, 2) * 0.2 + [0.0, -0.5]
 
-inputs = numpy.concatenate((classA, classB))
-targets = numpy.concatenate(
-    (numpy.ones(classA.shape[0]),
-    -numpy.ones(classB.shape[0])))
+inputs = np.concatenate((classA, classB))
+targets = np.concatenate(
+    (np.ones(classA.shape[0]),
+    -np.ones(classB.shape[0])))
 
 N = inputs.shape[0]
+
+#Compute sigma (std deviation)
+sigma = np.std(inputs)
 
 permute = list(range(N))
 random.shuffle(permute)
 inputs = inputs[permute, :]
 targets = targets[permute]
 
-zeros = numpy.zeros(N)
+zeros = np.zeros(N)
 
 #Save matrix before calling minimiza
 matrix_p = save_matrix(inputs, targets)
@@ -117,10 +136,10 @@ plt.plot([p[0] for p in classB],
         [p[1] for p in classB], 'r.')
 
 #PLOTTING DEC BOUNDARY
-x_grid = numpy.linspace(-3,3)
-y_grid = numpy.linspace(-2,2)
+x_grid = np.linspace(-3,3)
+y_grid = np.linspace(-2,2)
 
-grid=numpy.array([[ind(numpy.array((x,y)), ext_alpha, targets, b)
+grid=np.array([[ind(np.array((x,y)), ext_alpha, targets, b)
                     for x in x_grid] for y in y_grid])
 
 plt.contour(x_grid, y_grid, grid, 
@@ -129,7 +148,7 @@ plt.contour(x_grid, y_grid, grid,
             linewidth=(1,3,1))
 
 plt.axis('equal')
-plt.savefig('svmplot.pdf')
+#plt.savefig('svmplot.pdf')
 plt.show()
 
 
