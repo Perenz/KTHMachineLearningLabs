@@ -19,11 +19,6 @@ def zero_fun(vec_a):
     #print("DEBUG Zerofun %f" % (toRtn))
     return toRtn
 
-#ALBERTO
-def compute_P_matrix(t, kern, x):
-    P = [[t[i]*t[j]*kern(x[i], x[j]) for j in range(len(t))] for i in range(len(t))]
-    return np.array(P)
-
 def save_matrix(targets, kern, inputs):
     matrix_p = np.empty((N,N))
     for i in range(N):
@@ -42,14 +37,6 @@ def objective(a):
 
     return val - np.sum(a)
 
-#ALBERTO
-def indicator(point, non_zero, b, ker):
-    res = 0
-    for i in range(len(non_zero)):
-        res += non_zero[i][0] * non_zero[i][1] * ker(point, non_zero[i][2])
-    res -= b
-    return res
-
 def ind(s, ext_a, ker, b):
     to_rtn = 0
     for i in ext_a:
@@ -57,14 +44,6 @@ def ind(s, ext_a, ker, b):
 
     to_rtn = to_rtn - b
     return to_rtn
-
-#ALBERTO
-def compute_b(point, non_zero, ker):
-    b = 0
-    for i in range(len(non_zero)):
-        b += non_zero[i][0] * non_zero[i][1] * ker(point, non_zero[i][2])
-    b -= non_zero[0][1]
-    return b
 
 def perform_b(ext_alpha, ker):
     b=0
@@ -78,7 +57,7 @@ def perform_b(ext_alpha, ker):
             b = b - s['t']
             return b
 
-# Construct training set
+# Create training set
 var=0.5
 center=[1.5, 0.5]
 classA = np.concatenate(
@@ -88,7 +67,7 @@ classB = np.random.randn(20, 2) * var + [0.0, -0.5]
 inputs = np.concatenate((classA, classB))
 targets = np.concatenate((np.ones(classA.shape[0]), -np.ones(classB.shape[0])))
 
-# Computer some_matrix
+# Computer p matrix
 
 N = inputs.shape[0]
 start = np.zeros(N)
@@ -176,9 +155,9 @@ def draw_gui():
     sfreq_b = Slider(plt.axes([0.25, 0.1, 0.2, 0.03]), 'C', 0.1, 10, valinit=1, valstep=0.1)
     sfreq_b.on_changed(changeC)
     gui_objects.append(sfreq_b)
-    sfreq_u = Slider(plt.axes([0.25, 0.05, 0.2, 0.03]), 'NonZeroPt', 0, num_nz, valinit=0, valstep=1)
-    sfreq_u.on_changed(changeNZ)
-    gui_objects.append(sfreq_u)
+    #sfreq_u = Slider(plt.axes([0.25, 0.05, 0.2, 0.03]), 'NonZeroPt', 0, num_nz, valinit=0, valstep=1)
+    #sfreq_u.on_changed(changeNZ)
+    #gui_objects.append(sfreq_u)
     rax = plt.axes([0.05, 0.4, 0.15, 0.15])
     radio2 = RadioButtons(rax, ('linear', 'polynomial', 'rbf'))
     radio2.on_clicked(kernel)
