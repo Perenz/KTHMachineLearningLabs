@@ -1,76 +1,84 @@
+import numpy as np, random, math
 from scipy.optimize import minimize
-import numpy, random, math
 import matplotlib.pyplot as plt
+from matplotlib.widgets import *
 
-#N will be modified by the code after random is called
-N = 0
+sigma = 1
+p_ker = 2
 
-matrix_p = numpy.empty((1,1))
-targets = numpy.empty(0)
+class Kernel:
+    def linear(xi, xj):
+        return np.dot(xi, xj)
 
-C = 10
+    def polynomial(xi, xj, p=2):
+        return pow((np.dot(xi,xj) + 1), p_ker) 
 
-def objective(vec_a):
-    first_term = 0
-    second_term = 0
-    for i in range(N):
-        for j in range(N):
-            first_term += vec_a[i]*vec_a[j]*matrix_p[i][j]
-        second_term += vec_a[i]
-    #toRtn = (first_term/2) - second_term
-    return (first_term/2) - second_term
+    def rbf(xi, xj, a=1):
+        return np.exp(-((np.linalg.norm(xi-xj)**2))/(2*sigma**2))
 
-def kernel_fun(xi,xj):
-    return numpy.dot(xi, xj)
-
-def zerofun(vec_a):
-    toRtn = numpy.dot(vec_a, targets)
+def zero_fun(vec_a):
+    toRtn = np.dot(vec_a, targets)
     #print("DEBUG Zerofun %f" % (toRtn))
     return toRtn
 
-def save_matrix(inputs, targets):
-    matrix_p = numpy.empty((N,N))
+def save_matrix(targets, kern, inputs):
+    matrix_p = np.empty((N,N))
     for i in range(N):
         for j in range(N):
-            matrix_p[i][j] = targets[i]*targets[j]*kernel_fun(inputs[i], inputs[j])
+            matrix_p[i][j] = targets[i]*targets[j]*kern(inputs[i], inputs[j])
     return matrix_p
 
-def perform_b(ext_alpha):
-    b=0
-    #print(len(ext_alpha))
-    for s in ext_alpha:
-        #Check that point is on the margin
-        if C is None or (s['a']>0 and s['a']<C):
-            print("DEBUG: ENTRATO in IF")
-            for i in ext_alpha:
-                b += i['a']*i['t']*kernel_fun(s['x'], i['x'])
-            b = b - s['t']
-            return b
+def objective(a):
+    global P
+    val = 0
+    # np.sum(np.dot(a, some_matrix))
+    #print("DEBUG A %d and N %d" % (len(a), N))
+    for i in range(len(a)):
+        for j in range(len(a)):
+            val += a[i]*a[j]*P[i][j]
+            
+    val = val * 0.5
+    return val - np.sum(a)
 
-def ind(s, ext_a, targets, b):
+def ind(s, ext_a, ker, b):
     to_rtn = 0
     for i in ext_a:
-        to_rtn += i['a']*i['t']*kernel_fun(s,i['x'])
+        to_rtn += i['a']*i['t']*ker(s,i['x'])
 
     to_rtn = to_rtn - b
     return to_rtn
 
+def perform_b(ext_alpha, ker):
+    b=0
+    #print(len(ext_alpha))
+    for s in ext_alpha:
+        #Check that point is on the margin
+        if (s['a']>0 and s['a']<C):
+            print("DEBUG: ENTRATO in IF")
+            for i in ext_alpha:
+                b += i['a']*i['t']*ker(s['x'], i['x'])
+            b = b - s['t']
+            return b
 
-#MAIN
+# Create training set
+var=0.2
+center=[1.5, 0.5]
 
-#Generating data
-numpy.random.seed()
+np.random.seed(100)
 
-classA = numpy.concatenate(
-    (numpy.random.randn(20,2) * 0.2 + [1.5, 0.5],
-    numpy.random.randn(20,2) * 0.2 + [-1.5, 0.5]))
+# Computer p matrix
+C = 10
+N = 0
+targets = None
 
-classB = numpy.random.randn(40, 2) * 0.2 + [0.0, -0.5]
+classA = np.concatenate(
+(np.random.randn(10, 2) * var + center,
+np.random.randn(10, 2) * var + [-center[0], center[1]]))
 
-inputs = numpy.concatenate((classA, classB))
-targets = numpy.concatenate(
-    (numpy.ones(classA.shape[0]),
-    -numpy.ones(classB.shape[0])))
+classB = np.random.randn(20, 2) * var + [0.0, -0.5]
+
+inputs = np.concatenate((classA, classB))
+targets = np.concatenate((np.ones(classA.shape[0]), -np.ones(classB.shape[0])))
 
 N = inputs.shape[0]
 
@@ -79,121 +87,129 @@ random.shuffle(permute)
 inputs = inputs[permute, :]
 targets = targets[permute]
 
-zeros = numpy.zeros(N)
 
-#Save matrix before calling minimiza
-matrix_p = save_matrix(inputs, targets)
+fig, ax = plt.subplots()
+plt.subplots_adjust(bottom=0.2)
+nz = 0
+ker = Kernel.linear
+num_nz = 0
 
-#print(matrix_p)
+def compute():
+    global P, num_nz
+    bounds= [(0, C) for b in range(N)]
+    constraint={'type':'eq', 'fun':zero_fun}
 
-ret = minimize(objective, zeros, method='SLSQP' ,bounds=[(0,C) for b in range(N)], constraints={'type':'eq', 'fun':zerofun}) 
+    P = save_matrix(targets, ker, inputs)
 
-alpha = ret['x']
+    start = np.zeros(N)
 
-print("DEBUG: Result %r" % ret['success'])
+    ret = minimize(objective, start, bounds=bounds, constraints=constraint)
+    alpha = ret['x']
 
-#Extract the nonzero values
-ext_alpha = list()
-#print("DEBUG", len(alpha))
-#print("DEBUG", alpha)
-for i in range(len(alpha)):
-    if abs(alpha[i]) > 0.0000001:
-        #print("DEBUG Maggiore")
-        #Save            
-        ext_alpha.append({'a':alpha[i], 'x':inputs[i], 't':targets[i]})
+    #print("Result: %r" % (ret['success']))
 
-#Calculate b using eq (7)
-b = perform_b(ext_alpha)
+    non_zero = list(map(lambda x: {'a':alpha[x], 't':targets[x], 'x':inputs[x]}, [i for i in range(len(alpha)) if 10 ** -5 < alpha[i] < C]))
+    
+    # print([non_zero[0][2] for i in range(len(non_zero))])
+    # print(non_zero[:2])
 
-print("DEBUG: b: %f" % (b))
+    num_nz = len(non_zero)
+    ax.clear()
+    # for nz in non_zero:
+    b = perform_b(non_zero, ker)
+    print('b', b)
+    #ind = indicator(non_zero[nz][2], non_zero, ker, b)
 
-
-#PLOTTING
-
-plt.plot([p[0] for p in classA],
-        [p[1] for p in classA], 'b.')
-
-plt.plot([p[0] for p in classB],
-        [p[1] for p in classB], 'r.')
-
-#PLOTTING DEC BOUNDARY
-x_grid = numpy.linspace(-3,3)
-y_grid = numpy.linspace(-2,2)
-
-grid=numpy.array([[ind(numpy.array((x,y)), ext_alpha, targets, b)
-                    for x in x_grid] for y in y_grid])
-
-plt.contour(x_grid, y_grid, grid, 
-            (-1.0, 0.0, 1.0),
-            colors=('red', 'black', 'blue'),
-            linewidth=(1,3,1))
-
-plt.axis('equal')
-plt.savefig('svmplot.pdf')
-plt.show()
+    # b = np.dot(non_zero[:0], np.dot(non_zero[:1], ker([non_zero[0][2] for i in range(len(non_zero))], non_zero[:2])))
+    # plotting
 
 
+    xgrid = np.linspace(-5, 5)
+    ygrid = np.linspace(-4, 4)
+    grid = np.array([[ind((x, y), non_zero, ker, b) for x in xgrid] for y in ygrid])
+
+    ax.contour(xgrid, ygrid, grid, (-1.0, 0.0, 1.0), colors=('red', 'black', 'blue'), linewidths=(1, 3, 1))
+    #ax.scatter(non_zero[nz][2][0], non_zero[nz][2][1])
 
 
-'''
-minimize(objective, start, bounds=B, constraint=XC)
-alpha = ret['x']
+    ax.plot([p[0] for p in classA],
+            [p[1] for p in classA],
+            'b.')
+    ax.plot([p[0] for p in classB],
+            [p[1] for p in classB],
+            'r.')
 
-objective is a function we have to define that takes a vector a as argument and return a scalar value.
-It should implement equation (4)
+    ax.axis('equal')
 
-start is a vector with the initial guess of the a vector.
-Can simply yse numpy.zeros(N)
+    # fig.savefig('svmplot.pdf')
+    plt.show()
+        # break
 
-B is a list of pairs of the same length as the a-vector
-statint the lower and upper bounds for the corresponding element in a
-e.g: B=[(0,C) for b in range(N)]
-B=[(0,none) for b in range(N)] to only have lower bound
+gui_objects = []
 
-XC is used to impose other constraint.
-We will use it to impose the equality constraint. Parameters is given
-as a dictionare with the fields type and fun stating the type and
-the implementation of the costraint
-con = {'type':'eq', 'fun', zerofun}
-zerofun is a function defined by us that calculate the value which should
-be constrained to zero.
-It takes a vector as argument and return a scalar value.
+def changeC(cc):
+    global C
+    C = cc
+    compute()
 
-We have to implement:
-- A suitable kernel function
-    Start with the linear kernel (scalary product) but also esplore other kernels
+def changeNZ(nzp):
+    global nz
+    nz = nzp
+    compute()
 
-- The function objective
-    t and K can be global
-    hint: pre-compute a matrix outside of the function and then store in a global variable
-        Inside the function use numpy.dot and numpy.sum
+def changeVar(v):
+    global var
+    var = v
+    compute()
 
-- The function zerofun
-    Should implement the equality costraint of equation (10)
-    Use numpy.dot
+def changeSig(s):
+    global sigma
+    sigma = s
+    compute()
 
-- Call minimize
-    It return a dictionare with some interesting keys
-    'x' to pick out the actual a values
-    'success' hold a boolean which is True if the optimizer
-    actually found a solution
+def changeP(p):
+    global p_ker
+    p_ker = p
+    compute()
 
-- Extract the non-zero a values
-Only a few of the a values will be non-zero
-We are dealing with floating point values so they will be 
-approximately zero. Use a threshold (10^-5) to determine which
-are to be regarded as non-zer0
-Save the non-zerp a along with the corresponding data points (x) 
-and target values (t) in a separata data structure
+def kernel(val):
+    global ker
+    if val == 'linear':
+        ker = Kernel.linear
+    elif val == 'polynomial':
+        ker = Kernel.polynomial
+    else:
+        ker = Kernel.rbf
+    compute()
 
-- Calculate the b value using equation (7)
-    Must use a point ON the margin
-    A point with a larger than zero but less than C
+def draw_gui():
+    gui_objects.clear()
 
-- Implement the indicator function, equation (6)
-    Uses the non-zero a together with their x and t to classify new points
+    sfreq_b = Slider(plt.axes([0.25, 0.1, 0.2, 0.03]), 'C', 0.1, 10, valinit=10, valstep=0.1)
+    sfreq_b.on_changed(changeC)
+    gui_objects.append(sfreq_b)
 
+    #sfreq_u = Slider(plt.axes([0.25, 0.05, 0.2, 0.03]), 'NonZeroPt', 0, num_nz, valinit=0, valstep=1)
+    #sfreq_u.on_changed(changeNZ)
+    #gui_objects.append(sfreq_u)
+    sfreq_v = Slider(plt.axes([0.25, 0.05, 0.2, 0.03]), 'Data variance', 0.1, 1, valinit=0.2, valstep=0.1)
+    sfreq_v.on_changed(changeVar)
+    gui_objects.append(sfreq_v)
 
-- Code for generating test data and visualizing the results in order
-to test our support vector machine
-'''
+    sfreq_s = Slider(plt.axes([0.25, 0.15, 0.2, 0.03]), 'Sigma', 0.1, 1, valinit=0.2, valstep=0.1)
+    sfreq_s.on_changed(changeSig)
+    gui_objects.append(sfreq_s)
+
+    sfreq_p = Slider(plt.axes([0.25, 0.20, 0.2, 0.03]), 'P', 1, 10, valinit=2, valstep=1)
+    sfreq_p.on_changed(changeP)
+    gui_objects.append(sfreq_p)
+
+    rax = plt.axes([0.05, 0.4, 0.15, 0.15])
+    radio2 = RadioButtons(rax, ('linear', 'polynomial', 'rbf'))
+    radio2.on_clicked(kernel)
+    gui_objects.append(radio2)
+
+plt.ion()
+compute()
+draw_gui()
+input()
